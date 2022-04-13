@@ -59,7 +59,7 @@ html {
     border-radius: 50%;
     font-weight: bold;
     animation: show 200ms ease-in-out;
-    /* transition: 100ms ease-in-out; */
+    transition: top 1000ms ease-in;
 }
 
 .ball:hover{
@@ -89,12 +89,19 @@ html {
 
 .debugger{
     position: fixed;
+    display: flex;
     padding: 10px;
     top: 0;
     left: 0;
-    display: block;
     border: 1px solid red;
     width: 100%;
     background-color: white;
     font-size: 14px;
+}
+
+.debugger > div{
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+    border: 1px solid red;
 }
