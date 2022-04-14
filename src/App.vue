@@ -14,9 +14,8 @@ let path = ref([])
 let score = ref(0)
 let mouseMoveThrottle = null;
 let debugMessage = ref('');
-let reactiveCoords = ref([0.0]);
 let strike = ref(0)
-let strikedIndices = ref([])
+let strikedIds = ref([]);
 
 // COLOR VARIETY - VARIABLES
 
@@ -163,11 +162,12 @@ const generateConnector = (x, y, cellSize, cellGap) => {
 }
 
 function reset(){
+
     gameboard.value = []
     connectors.value = []
     score.value = 0
     strike.value = 0
-    strikedIndices.value = []
+    strikedIds.value = []
     path.value = []
 
     gameboard.value = populateGameboard()
@@ -224,11 +224,11 @@ const populateConnectors = () => {
     return connectors
 }
 
-const handleCellDrag = (obj, index) => {
+const handleCellDrag = (obj) => {
 
     if (!path.value.length) {
-        strikedIndices.value.push(index)
         path.value.push(obj)
+        strikedIds.value = path.value.map(entry => entry.id)
         debugMessage.value = `Clicked on ${obj.data.coords.col}, ${obj.data.coords.row}`
         return
     }
@@ -245,8 +245,8 @@ const handleCellDrag = (obj, index) => {
     if (colormatch && adjacing) {
         path.value.push(obj)
         debugMessage.value = `add color ${obj.style.backgroundColor}`
+        strikedIds.value.push(obj.id)
         strike.value += 1
-        strikedIndices.value.push(index)
         return
     }
 
@@ -259,69 +259,39 @@ function processStrike(){
 
     score.value += strike.value
     strike.value = 0
+
+    let gameboardCopy = [...gameboard.value]
     
-    if(strikedIndices.value.length > 1 && path.value.length){
-        let gameboardCopy = [...gameboard.value]
-        let strikedCoordinates = path.value.map(entry => entry.data.coords)
+    if(strikedIds.value.length > 1 && path.value.length){
 
-        // is there a ball above striked?
-        let coordsRowUp = strikedCoordinates.map(entry => {
-            return entry.row > 0 ? [entry.row - 1, entry.col] : false
-        })
+        for (let index = vGridSize.value; index >= 0; index--) {
+            for (let index = hGridSize.value; index >= 0; index--) {
 
-        // in drop chain ###
-        shiftPositionDown(coordsRowUp)
+                // when empty after striked
+                let strikedEntries = gameboardCopy.filter(entry => strikedIds.value.includes(entry.id))
 
-        gameboard.value = gameboardCopy.filter((cell,index) => {
-            return gameboard.value[index] === cell && !strikedIndices.value.includes(index)
-        })
+                let coordsRowAbove = strikedEntries.map(entry => [entry.data.coords.row - 1, entry.data.coords.col])
 
-        // loop over each entry in gameboard to check if there is an existing entry below
-        gameboard.value.forEach((entry) => {
-            let coordsRowDown = entry.data.coords.row < vGridSize.value -1 ? [entry.data.coords.row + 1, entry.data.coords.col] : false
-            console.log(coordsRowDown)
-        })
+                let entriesAbove = []
 
-        // remove connectors from striked indices
-        connectors.value.filter((c, index) => {
-            connectors.value[index] === c && !strikedIndices.value.includes(index)
-        })
+                coordsRowAbove.forEach((c) => {
 
-        strikedIndices.value = []
-        path.value = []
+                    // row = c[0], col = c[1]
+                    let entry = gameboardCopy.find(obj => obj.data.coords.row === c[0] && obj.data.coords.col === c[1])
+
+                    if(entry){
+                        entriesAbove.push(entry)
+                    }
+                })
+
+                console.log(entriesAbove)
+            }
+        }
     }
 
-    return
-
-}
-
-function shiftPositionDown(coordsRowUp){
-
-    // find ids of entries on coordsRowUp
-    let entryIds = []
-
-    coordsRowUp.forEach((c) => {
-
-        if(!c) return
-
-        let { id } = gameboard.value.find(entry => entry.data.coords.row === c[0] && entry.data.coords.col === c[1])
-        if(!id) return
-
-        entryIds.push(id)
-    })
-
-    console.log('ids', entryIds )
-
-    // set ball/entry position 1 row down ## works only now on horizontal adjecents
-    entryIds.forEach(id => {
-
-        let index = gameboard.value.findIndex(entry => entry.id === id)
-
-        let currentTop = gameboard.value[index].position.top 
-
-        gameboard.value[index].style.top = currentTop + ( cellSize.value + cellGap.value ) + 'vmin'
-    })
-
+    path.value = []
+    gameboard.value = gameboardCopy.filter(entry => !strikedIds.value.includes(entry.id))
+    strikedIds.value = []
 
 }
 
@@ -369,10 +339,9 @@ const onMouseMove = (e) => {
             //code
             if(e.target.closest(".ball")){
                 let element = e.target.closest(".ball")
-                let index = parseInt(element.getAttribute("data-index"))
-                let obj = gameboard.value[index];
-                handleCellDrag(obj, index)
-                reactiveCoords.value = [obj.data.coords.row, obj.data.coords.col];
+                let dataId = parseInt(element.getAttribute("data-id"))
+                let obj = gameboard.value.find(entry => entry.id === dataId)
+                handleCellDrag(obj)
             }
 
             mouseMoveThrottle = null;
@@ -420,7 +389,7 @@ const coordsInPath = (coords) => {
                 <code>Score: {{ score }}</code>
                 <code>Strike: {{ strike }}</code>
                 <code>msg: {{ debugMessage }}</code>
-                <code>striked: {{ strikedIndices }}</code>
+                <code>striked: {{ strikedIds }}</code>
                 <code>Colors: {{ colorVariety }}</code>
             </div>
 
@@ -447,9 +416,10 @@ const coordsInPath = (coords) => {
         <div v-for="i, in (vGridSize * hGridSize)" class="cell"></div>
 
         <!-- balls -->
-        <div :data-index="index" v-for="(obj,index) in gameboard " class="ball" :style="obj.style">
+        <div v-for="(obj, index) in gameboard" :data-id="obj.id" class="ball" :style="obj.style">
             <span class="coords">[ {{ obj.data.coords.row}}, {{ obj.data.coords.col }}]</span>
             <span class="number">{{ obj.id }}</span>
+            <span style="font-size:15px;color:white;">{{ index }}</span>
         </div>
 
         <!-- connecteuren -->
@@ -463,6 +433,4 @@ const coordsInPath = (coords) => {
         </div>
     </div>
 </template>
-
-<!-- index === vectors[vectors.length - 1].index -->
 

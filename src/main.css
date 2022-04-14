@@ -59,6 +59,10 @@ html {
     border-radius: 50%;
     font-weight: bold;
     animation: show 200ms ease-in-out;
+    
+}
+
+.ball.dyanmic {
     transition: top 1000ms ease-in;
 }
 
