@@ -58,12 +58,11 @@ html {
     align-items: center;
     border-radius: 50%;
     font-weight: bold;
-    animation: show 200ms ease-in-out;
-    
+    animation: show 200ms ease-in-out;   
 }
 
-.ball.dyanmic {
-    transition: top 1000ms ease-in;
+.ball.dynamic {
+    transition: top .3s ease-in-out;
 }
 
 .ball:hover{
