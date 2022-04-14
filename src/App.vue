@@ -174,7 +174,10 @@ function reset(){
     connectors.value = populateConnectors()
 }
 
-const generateBall = (id, x, y, cellSize, cellGap ) => {
+const generateBall = (x, y, cellSize, cellGap ) => {
+
+
+    let id = Date.now() + (Math.random()*10);
 
     let position = {
         top: y * ( cellSize + cellGap ) + cellGap,
@@ -194,7 +197,8 @@ const generateBall = (id, x, y, cellSize, cellGap ) => {
             backgroundColor: _.sample(returnColorsArray()),
             width: `${cellSize}vmin`,
             height: `${cellSize}vmin`
-        }
+        },
+        dynamic: false
     }
 }
 
@@ -204,7 +208,7 @@ const populateGameboard = () => {
 
     for(let y = 0; y < vGridSize.value; y++){
         for(let x = 0; x < hGridSize.value; x++){
-            board.push(generateBall(board.length + 1, x, y, cellSize.value, cellGap.value));
+            board.push(generateBall(x, y, cellSize.value, cellGap.value));
         }
     }
 
@@ -259,41 +263,38 @@ function processStrike(){
 
     score.value += strike.value
     strike.value = 0
-
-    let gameboardCopy = [...gameboard.value]
     
     if(strikedIds.value.length > 1 && path.value.length){
-
-        for (let index = vGridSize.value; index >= 0; index--) {
-            for (let index = hGridSize.value; index >= 0; index--) {
-
-                // when empty after striked
-                let strikedEntries = gameboardCopy.filter(entry => strikedIds.value.includes(entry.id))
-
-                let coordsRowAbove = strikedEntries.map(entry => [entry.data.coords.row - 1, entry.data.coords.col])
-
-                let entriesAbove = []
-
-                coordsRowAbove.forEach((c) => {
-
-                    // row = c[0], col = c[1]
-                    let entry = gameboardCopy.find(obj => obj.data.coords.row === c[0] && obj.data.coords.col === c[1])
-
-                    if(entry){
-                        entriesAbove.push(entry)
-                    }
-                })
-
-                console.log(entriesAbove)
-            }
-        }
+        gameboard.value = gameboard.value.filter(entry => !strikedIds.value.includes(entry.id))
+        path.value = []
+        strikedIds.value = []
     }
 
-    path.value = []
-    gameboard.value = gameboardCopy.filter(entry => !strikedIds.value.includes(entry.id))
-    strikedIds.value = []
 
+        for (let i = vGridSize.value-1; i >= 0; i--) {
+            for (let col = hGridSize.value-1; col >= 0; col--) {
+
+                // check if NO ball exists at coord [i, col]
+                if(gameboard.value.find(obj => obj.data.coords.row === i && obj.data.coords.col === col) === undefined)
+                {
+                    // walk up to find first ball
+                        for(let ii = i; ii >=0; ii--)
+                    {
+                        // set ball to current coord
+                        let ballToDrop = gameboard.value.find(obj => obj.data.coords.row === ii && obj.data.coords.col === col);
+                        if(ballToDrop !== undefined) {
+
+                            ballToDrop.data.coords.row = i
+                            ballToDrop.data.coords.col = col
+
+                            break;
+                        }
+                    } 
+                }
+            }
+        }
 }
+
 
 function checkAdjacing(newObj, prevObj) {
     // obv row en col distance check
@@ -339,7 +340,8 @@ const onMouseMove = (e) => {
             //code
             if(e.target.closest(".ball")){
                 let element = e.target.closest(".ball")
-                let dataId = parseInt(element.getAttribute("data-id"))
+                let dataId = element.getAttribute("data-id")
+                console.log('dataid', dataId)
                 let obj = gameboard.value.find(entry => entry.id === dataId)
                 handleCellDrag(obj)
             }
@@ -416,9 +418,20 @@ const coordsInPath = (coords) => {
         <div v-for="i, in (vGridSize * hGridSize)" class="cell"></div>
 
         <!-- balls -->
-        <div v-for="(obj, index) in gameboard" :data-id="obj.id" class="ball" :style="obj.style">
+        <!-- :style="obj.style" -->
+        <div v-for="(obj, index) in gameboard" 
+            :data-id="obj.id" 
+            :class="{'dynamic' : obj.dynamic }" 
+            class="ball" 
+            :style="{
+                top: ((obj.data.coords.row * ( cellSize + cellGap )) + cellGap)+'vmin',
+                left: ((obj.data.coords.col * ( cellSize + cellGap )) + cellGap)+'vmin',
+                backgroundColor: _.sample(returnColorsArray()),
+                width: `${cellSize}vmin`,
+                height: `${cellSize}vmin`
+            }"
+            >
             <span class="coords">[ {{ obj.data.coords.row}}, {{ obj.data.coords.col }}]</span>
-            <span class="number">{{ obj.id }}</span>
             <span style="font-size:15px;color:white;">{{ index }}</span>
         </div>
 
@@ -434,3 +447,10 @@ const coordsInPath = (coords) => {
     </div>
 </template>
 
+<style>
+
+.ball {
+    transition: top .3s ease-in-out;
+}
+
+</style>
