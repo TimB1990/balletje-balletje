@@ -3,6 +3,8 @@
 import { onMounted, ref, computed } from 'vue';
 import _ from 'lodash';
 
+const DEBUG = true
+
 // VARIABLES
 let gameboard = ref([])
 let connectors = ref([])
@@ -16,10 +18,12 @@ let mouseMoveThrottle = null;
 let debugMessage = ref('');
 let strike = ref(0)
 let strikedIds = ref([]);
+let allCoords = ref([])
+
 
 // COLOR VARIETY - VARIABLES
 
-let colorVariety = ref("nine")
+let colorVariety = DEBUG ? ref("one") : ref("six")
 
 // CORE
 onMounted(() => {
@@ -184,22 +188,21 @@ const generateBall = (x, y, cellSize, cellGap ) => {
     return {
         id: Math.random().toString(36).slice(2, 10),
         data: {
-            coords: {col: x, row: y},
+            coords: {row: y, col: x},
             adjacingDirection: [0,0],
         },
+        hidden: false,
         dynamic: false,
         position,
         style: {
-            top: `${position.top}vmin`,
-            left: `${position.left}vmin`,
             backgroundColor: _.sample(returnColorsArray()),
-            width: `${cellSize}vmin`,
-            height: `${cellSize}vmin`
         }
     }
 }
 
 const populateGameboard = () => {
+
+    console.log('populate board')
 
     let board = []
 
@@ -209,7 +212,7 @@ const populateGameboard = () => {
         }
     }
 
-    console.log(board)
+    allCoords.value = board.map(entry => JSON.stringify(entry.data.coords))
 
     return board
 }
@@ -229,6 +232,8 @@ const populateConnectors = () => {
 
 const handleCellDrag = (obj) => {
 
+    // TODO DEBUG IMPROVE
+
     if (!path.value.length) {
         path.value.push(obj)
         strikedIds.value = path.value.map(entry => entry.id)
@@ -238,6 +243,10 @@ const handleCellDrag = (obj) => {
 
     if (path.value.includes(obj)) {
         debugMessage.value = `Already clicked on ${obj.data.coords.col}, ${obj.data.coords.row}`
+
+        // let pathLength = path.value.length
+        // path.value.splice(path.value[pathLength - 1], 1)
+
         return
     }
 
@@ -264,35 +273,62 @@ function processStrike(){
     strike.value = 0
 
     gameboard.value.forEach(entry => entry.dynamic = false)
+
+    let gameboardCopy = [...gameboard.value]
     
     if(strikedIds.value.length > 1 && path.value.length){
+
         gameboard.value = gameboard.value.filter(entry => !strikedIds.value.includes(entry.id))
-        path.value = []
-        strikedIds.value = []
-    }
 
-    for (let i = vGridSize.value-1; i >= 0; i--) {
-        for (let col = hGridSize.value-1; col >= 0; col--) {
+        let strikedEntries = gameboardCopy.filter(entry => strikedIds.value.includes(entry.id))
 
-            // check if NO ball exists at coord [i, col]
-            if(gameboard.value.find(obj => obj.data.coords.row === i && obj.data.coords.col === col) === undefined)
-            {
-                // walk up to find first ball
-                    for(let ii = i; ii >=0; ii--)
-                {
-                    // set ball to current coord
-                    let ballToDrop = gameboard.value.find(obj => obj.data.coords.row === ii && obj.data.coords.col === col);
-                    if(ballToDrop !== undefined) {
+        strikedEntries.forEach((striked) => {
 
-                        ballToDrop.data.coords.row = i
-                        ballToDrop.data.coords.col = col
-                        ballToDrop.dynamic = true
+            let currentRow = striked.data.coords.row
 
-                        break;
-                    }
-                } 
+            let stackedEntries = []
+            
+            for(let i = currentRow; i >= 0; i--){
+                
+                let stacked = gameboard.value.find(entry => entry.data.coords.row === i && entry.data.coords.col === striked.data.coords.col)
+
+                if(stacked !== undefined){
+                    stacked.dynamic = true
+                    stacked.data.coords.row += 1 
+                }
+
+                // which ballen are above me?
+                stackedEntries.push(stacked)
             }
-        }
+        })
+
+        let gameboardCoords = gameboard.value.map(entry => JSON.stringify(entry.data.coords))
+
+        let emptyCells = allCoords.value.filter(coord => !gameboardCoords.includes(coord))
+
+        let ballQueue = []
+
+        emptyCells.forEach((cell) => {
+
+            let parsedCell = JSON.parse(cell)
+
+            let pendingBall = generateBall(parsedCell.col, parsedCell.row - vGridSize.value, cellSize.value, cellGap.value)
+            pendingBall.style.backgroundColor = "green";
+
+            pendingBall.hidden = false
+            ballQueue.push(pendingBall)
+            gameboard.value.push(pendingBall)
+        })
+
+        // find balls with negative coords
+        gameboard.value
+            .filter(entry => entry.data.coords.row < 0)
+            .forEach((entry) => {
+                setTimeout(() => {
+                    entry.dynamic = true
+                    entry.data.coords.row += vGridSize.value
+                }, 1000)
+            })
     }
 }
 
@@ -321,18 +357,33 @@ const oppositeVector = (vector) => {
 
 // GAME BOARD EVENT LISTENERS
 const onMouseDown = () => {
+    // console.log('mousedown')
     let board = document.querySelector("#gameboard")
     board.addEventListener("mousemove", onMouseMove)
 }
 
 const onMouseUp = () => {
+    // console.log('mouseup')
     let board = document.querySelector("#gameboard")
+
     board.removeEventListener("mousemove", onMouseMove)
-    setTimeout(processStrike(), 200);
+    board.removeEventListener("mousedown", onMouseDown)
+
+    // setTimeout(processStrike(), 50);
+    processStrike()
+
+    path.value = []
+    strikedIds.value = 0
+    strikedIds = []
     
 }
 
 const onMouseMove = (e) => {
+
+    // console.log('mouse move')
+
+    let board = document.querySelector("#gameboard")
+    board.removeEventListener("mousedown", onMouseDown)
 
     if(mouseMoveThrottle === null)
     {
@@ -352,7 +403,7 @@ const onMouseMove = (e) => {
 
             mouseMoveThrottle = null;
 
-        }, 100)
+        }, 50)
     }
 }
 
@@ -426,13 +477,14 @@ const coordsInPath = (coords) => {
         <div v-for="(obj, index) in gameboard" 
             :data-id="obj.id" 
             class="ball"
-            :class="{'dynamic' : obj.dynamic}" 
             :style="{
                 top: ((obj.data.coords.row * ( cellSize + cellGap )) + cellGap)+'vmin',
                 left: ((obj.data.coords.col * ( cellSize + cellGap )) + cellGap)+'vmin',
                 backgroundColor: obj.style.backgroundColor,
                 width: `${cellSize}vmin`,
-                height: `${cellSize}vmin`
+                height: `${cellSize}vmin`,
+                opacity: obj.hidden ? 0 : 1,
+                transition: obj.dynamic ? `top ${0.8}s ease-in` : 'none'
             }"
             >
             <span class="coords">[ {{ obj.data.coords.row}}, {{ obj.data.coords.col }}]</span>
@@ -440,7 +492,7 @@ const coordsInPath = (coords) => {
         </div>
 
         <!-- connecteuren -->
-        <div v-for="(connector,index) in connectors" class="connector-wrapper">
+        <div v-for="(connector) in connectors" class="connector-wrapper">
             <div 
                 v-for="direction in connector.directions" 
                 v-show="connectors.length > 0 && coordsInPath([connector.data.row, connector.data.col]) && coordsInPath([connector.data.row, connector.data.col]).dir && coordsInPath([connector.data.row, connector.data.col]).dir.toString() === oppositeVector(direction.vector).toString()" 

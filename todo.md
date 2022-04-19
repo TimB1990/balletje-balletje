@@ -1,5 +1,18 @@
-## droplogic
+## TODO list
+[] nieuwe droplogic
+[X] oplossing/workaround langzame trigger balletjes
+[?] lag bij slepen buiten board
+[] implementatie terug striken => strike id aanpassen
 
-description: 
+[] generen nieuwe balletjes lege cellen bovenkant
+[] blokkades cellen # feature
+[] styling connectors verbeteren
 
-- if cell at direction -1,0 is empty change position y - 1
+## generen nieuwe cellen.
+
+1. ballen worden gegenereerd op gespiegelde posities t.o.v. van uiteindelijke positie
+2. zoek maximale row coordinate in - posities verplaats naar maximale row + posities. => DMV afwaardse loop
+3. grootste in minus spectrum gaat naar grootste in positive spectrum
+
+
+

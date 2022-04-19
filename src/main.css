@@ -58,11 +58,8 @@ html {
     align-items: center;
     border-radius: 50%;
     font-weight: bold;
-    animation: show 200ms ease-in-out;   
-}
-
-.ball.dynamic {
-    transition: top .3s ease-in-out;
+    /* animation: show 200ms ease-in-out;    */
+    opacity: 1;
 }
 
 .ball:hover{
@@ -107,4 +104,8 @@ html {
     flex-direction: column;
     width: 50%;
     border: 1px solid red;
+}
+
+.hidden {
+    opacity: 0;
 }
