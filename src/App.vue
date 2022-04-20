@@ -312,7 +312,7 @@ function processStrike(){
 
             let parsedCell = JSON.parse(cell)
 
-            let pendingBall = generateBall(parsedCell.col, parsedCell.row - vGridSize.value, cellSize.value, cellGap.value)
+            let pendingBall = generateBall(parsedCell.col, parsedCell.row - (vGridSize.value * 2), cellSize.value, cellGap.value)
             pendingBall.style.backgroundColor = "green";
 
             pendingBall.hidden = false
@@ -323,12 +323,12 @@ function processStrike(){
         // find balls with negative coords
         gameboard.value
             .filter(entry => entry.data.coords.row < 0)
-            .forEach((entry) => {
+            .forEach(entry => {
                 setTimeout(() => {
                     entry.dynamic = true
-                    entry.data.coords.row += vGridSize.value
+                    entry.data.coords.row += vGridSize.value * 2
                 }, 1000)
-            })
+            }) 
     }
 }
 
