@@ -2,6 +2,7 @@
 
 import { onMounted, ref, computed } from 'vue';
 import _ from 'lodash';
+import { generate } from '@vue/compiler-core';
 
 const DEBUG = true
 
@@ -10,7 +11,7 @@ let gameboard = ref([])
 let connectors = ref([])
 let vGridSize = ref(5)
 let hGridSize = ref(5)
-let cellSize = ref(10)
+let cellSize = ref(6)
 let cellGap = ref(2)
 let path = ref([])
 let score = ref(0)
@@ -178,11 +179,11 @@ function reset(){
     connectors.value = populateConnectors()
 }
 
-const generateBall = (x, y, cellSize, cellGap ) => {
+const generateBall = (x, y) => {
 
     let position = {
-        top: y * ( cellSize + cellGap ) + cellGap,
-        left: x * ( cellSize + cellGap ) + cellGap
+        top: y * ( cellSize.value + cellGap.value ) + cellGap,
+        left: x * ( cellSize.value + cellGap.value ) + cellGap
     }
 
     return {
@@ -208,7 +209,7 @@ const populateGameboard = () => {
 
     for(let y = 0; y < vGridSize.value; y++){
         for(let x = 0; x < hGridSize.value; x++){
-            board.push(generateBall(x, y, cellSize.value, cellGap.value));
+            board.push(generateBall(x, y));
         }
     }
 
@@ -232,8 +233,6 @@ const populateConnectors = () => {
 
 const handleCellDrag = (obj) => {
 
-    // TODO DEBUG IMPROVE
-
     if (!path.value.length) {
         path.value.push(obj)
         strikedIds.value = path.value.map(entry => entry.id)
@@ -243,10 +242,6 @@ const handleCellDrag = (obj) => {
 
     if (path.value.includes(obj)) {
         debugMessage.value = `Already clicked on ${obj.data.coords.col}, ${obj.data.coords.row}`
-
-        // let pathLength = path.value.length
-        // path.value.splice(path.value[pathLength - 1], 1)
-
         return
     }
 
@@ -259,77 +254,41 @@ const handleCellDrag = (obj) => {
         debugMessage.value = `add color ${obj.style.backgroundColor}`
         strikedIds.value.push(obj.id)
         strike.value += 1
-        score.value += strike.value + 1
         return
     }
 
     debugMessage.value = `incorrect dont do anyhting`
-
-    processStrike()
 }
 
 function processStrike(){
 
-    strike.value = 0
-
     gameboard.value.forEach(entry => entry.dynamic = false)
 
-    let gameboardCopy = [...gameboard.value]
-    
-    if(strikedIds.value.length > 1 && path.value.length){
+    if(strikedIds.value.length > 0 && path.value.length){
 
-        gameboard.value = gameboard.value.filter(entry => !strikedIds.value.includes(entry.id))
+        // find out which balls are on top of striked ball
+        defineStackAndDropNewBalls()
 
-        let strikedEntries = gameboardCopy.filter(entry => strikedIds.value.includes(entry.id))
-
-        strikedEntries.forEach((striked) => {
-
-            let currentRow = striked.data.coords.row
-
-            let stackedEntries = []
-            
-            for(let i = currentRow; i >= 0; i--){
-                
-                let stacked = gameboard.value.find(entry => entry.data.coords.row === i && entry.data.coords.col === striked.data.coords.col)
-
-                if(stacked !== undefined){
-                    stacked.dynamic = true
-                    stacked.data.coords.row += 1 
-                }
-
-                // which ballen are above me?
-                stackedEntries.push(stacked)
-            }
-        })
-
-        let gameboardCoords = gameboard.value.map(entry => JSON.stringify(entry.data.coords))
-
-        let emptyCells = allCoords.value.filter(coord => !gameboardCoords.includes(coord))
-
-        let ballQueue = []
-
-        emptyCells.forEach((cell) => {
-
-            let parsedCell = JSON.parse(cell)
-
-            let pendingBall = generateBall(parsedCell.col, parsedCell.row - (vGridSize.value * 2), cellSize.value, cellGap.value)
-            pendingBall.style.backgroundColor = "green";
-
-            pendingBall.hidden = false
-            ballQueue.push(pendingBall)
-            gameboard.value.push(pendingBall)
-        })
-
-        // find balls with negative coords
-        gameboard.value
-            .filter(entry => entry.data.coords.row < 0)
-            .forEach(entry => {
-                setTimeout(() => {
-                    entry.dynamic = true
-                    entry.data.coords.row += vGridSize.value * 2
-                }, 1000)
-            }) 
+        /* score.value += strike.value + 1
+        strikedIds.value = []
+        strike.value = 0 */
     }
+}
+
+function defineStackAndDropNewBalls(){
+
+    const sortedPath = path.value.sort((a, b) => {
+        return a.data.coords.row < b.data.coords.row ? 1 : -1 
+    })
+
+    sortedPath.forEach(p => {
+        console.log()
+    })
+
+
+    let gameboardCoords = gameboard.value.map(entry => JSON.stringify(entry.data.coords))
+    let emptyCoords = allCoords.value.filter(coord => !gameboardCoords.includes(coord)).map(coords => JSON.parse(coords))
+
 }
 
 
@@ -356,55 +315,45 @@ const oppositeVector = (vector) => {
 }
 
 // GAME BOARD EVENT LISTENERS
-const onMouseDown = () => {
-    // console.log('mousedown')
+const onMouseDown = (e) => {
+
+    if(!e.target.closest("#gameboard")) return
+
     let board = document.querySelector("#gameboard")
     board.addEventListener("mousemove", onMouseMove)
+    window.addEventListener("mouseup", onMouseUp)
 }
 
 const onMouseUp = () => {
-    // console.log('mouseup')
+
     let board = document.querySelector("#gameboard")
 
     board.removeEventListener("mousemove", onMouseMove)
     board.removeEventListener("mousedown", onMouseDown)
 
-    // setTimeout(processStrike(), 50);
     processStrike()
 
     path.value = []
-    strikedIds.value = 0
     strikedIds = []
     
 }
 
 const onMouseMove = (e) => {
 
-    // console.log('mouse move')
-
     let board = document.querySelector("#gameboard")
     board.removeEventListener("mousedown", onMouseDown)
 
-    if(mouseMoveThrottle === null)
-    {
-        mouseMoveThrottle = setTimeout(() => {
+    let element = e.target.closest('.ball')
 
-            //code
-            if(e.target.closest(".ball")){
-                let element = e.target.closest(".ball")
-                let dataId = element.getAttribute("data-id")
-                
-                let obj = gameboard.value.find((entry) => {
-                    return entry.id === dataId
-                })
+    if(!element) return
 
-                handleCellDrag(obj)
-            }
+    let dataId = element.getAttribute("data-id")
 
-            mouseMoveThrottle = null;
+    let obj = gameboard.value.find((entry) => {
+        return entry.id === dataId
+    })
 
-        }, 50)
-    }
+    handleCellDrag(obj)
 }
 
 // COMPUTED
@@ -413,7 +362,7 @@ const gameboardLayout = computed(() => {
         display: 'grid',
         gridTemplateRows: `repeat(${vGridSize.value}, ${cellSize.value}vmin)`,
         gridTemplateColumns: `repeat(${hGridSize.value}, ${cellSize.value}vmin)`,
-        gap: `${cellGap}vmin`
+        gap: `${cellGap.value}vmin`
     }
 })
 
@@ -439,14 +388,13 @@ const coordsInPath = (coords) => {
 
 <template>
 
-    <div @mousedown="onMouseDown()" @mouseup="onMouseUp()" id="gameboard" :style="gameboardLayout">
+    <div @mousedown="onMouseDown" id="gameboard" :style="gameboardLayout">
 
-        <div class="debugger">
+        <!-- <div class="debugger">
             <div class="debug-info">
                 <code>Score: {{ score }}</code>
                 <code>Strike: {{ strike }}</code>
                 <code>msg: {{ debugMessage }}</code>
-                <code>striked: {{ strikedIds }}</code>
                 <code>Colors: {{ colorVariety }}</code>
             </div>
 
@@ -456,7 +404,6 @@ const coordsInPath = (coords) => {
                 <label for="colCount">Columns:</label>
                 <input @change="reset" v-model="hGridSize" id="colCount" type="number" min="4" max="12">
 
-                <!-- color variants -->
                 <label for="colorVariants">Color Variety:</label>
                 <select @change="reset()" v-model="colorVariety" name="colorVariants" id="colorVariants">
                     <option value="one">single color - ONLY DEBUG</option>
@@ -467,7 +414,7 @@ const coordsInPath = (coords) => {
                     <option value="fifteen">15 colors</option>
                 </select>
             </div>
-        </div>
+        </div> -->
 
         <!-- cells -->
         <div v-for="i, in (vGridSize * hGridSize)" class="cell"></div>
@@ -475,20 +422,21 @@ const coordsInPath = (coords) => {
         <!-- balls -->
         <!-- :style="obj.style" -->
         <div v-for="(obj, index) in gameboard" 
-            :data-id="obj.id" 
+            :data-id="obj.id"
+            :key="obj.id"
             class="ball"
             :style="{
                 top: ((obj.data.coords.row * ( cellSize + cellGap )) + cellGap)+'vmin',
                 left: ((obj.data.coords.col * ( cellSize + cellGap )) + cellGap)+'vmin',
-                backgroundColor: obj.style.backgroundColor,
+                background: `radial-gradient(circle at 15px 15px, ${obj.style.backgroundColor}, #000)`,
                 width: `${cellSize}vmin`,
                 height: `${cellSize}vmin`,
-                opacity: obj.hidden ? 0 : 1,
-                transition: obj.dynamic ? `top ${0.8}s ease-in` : 'none'
+                // opacity: obj.hidden ? 0 : 1,
+                transition: obj.dynamic ? `top ${0.5}s ease-in` : 'none',
+                border: index >= (hGridSize * vGridSize) -1 ? `5px solid yellow` : `none`
             }"
             >
-            <span class="coords">[ {{ obj.data.coords.row}}, {{ obj.data.coords.col }}]</span>
-            <span style="font-size:15px;color:white;">{{ index }}</span>
+            <span class="index">i: {{ index }}</span>
         </div>
 
         <!-- connecteuren -->
