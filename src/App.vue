@@ -267,11 +267,12 @@ function processStrike(){
     if(path.value.length){
 
         // find out which balls are on top of striked ball
-        defineStackAndDropNewBalls()
 
-        // score.value += strike.value + 1
-        // strikedIds.value = []
-        // strike.value = 0
+        defineStackAndDropNewBalls()
+        path.value = []
+        score.value += strike.value + 1
+        strikedIds.value = []
+        strike.value = 0
     }
 }
 
@@ -290,13 +291,9 @@ function defineStackAndDropNewBalls(){
         
         if(!entry) return
 
-        entry.style.backgroundColor = "black"
-
         cols.push(p.data.coords.col)
 
     })
-
-    const targets = []
 
     for(let col = 0; col < hGridSize.value; col++){
 
@@ -313,41 +310,36 @@ function defineStackAndDropNewBalls(){
                 let current = gameboard.value.find(g => g.data.coords.row === up && g.data.coords.col === col)
 
                 if (up < 0) {
-                    console.log('create ball at and assign target for', up, row)
+                    // console.log('create ball at and assign target for', up, row)
+                    let newBall = generateBall(col, up - vGridSize.value)
+                    gameboard.value.push(newBall)
+                    newBall.dynamic = true
+                    newBall.target = row
                     break;
                 } 
 
-                let inPath = sortedPath.find(p => p === current)
+                let currentInPath = sortedPath.find(p => p === current)
 
-                if(inPath || current.target !== undefined ) continue;
-
-                console.log('found', up)
-
-                current.style.backgroundColor = "yellow"
+                if(currentInPath || current.target !== undefined ) continue;
 
                 current.target = row
-
                 break;
 
             }
         }
     }
 
-    console.log(targets)
+    gameboard.value = gameboard.value.filter(entry => !sortedPath.map(s => s.id).includes(entry.id))
 
-
-    // END
-
+    gameboard.value.forEach(entry => {
+        if(entry.target === undefined) return
+        setTimeout(() => {
+            entry.dynamic = true
+            entry.data.coords.row = entry.target
+            entry.target = undefined
+        }, 50)
+    })
 }
-
-function movePosition(fromCoords, toCoords){
-
-    if(!(Array.isArray(fromCoords) || Array.isArray(toCoords))) return
-
-
-
-}
-
 
 function checkAdjacing(newObj, prevObj) {
 
@@ -446,7 +438,7 @@ const coordsInPath = (coords) => {
 
     <div @mousedown="onMouseDown" id="gameboard" :style="gameboardLayout">
 
-        <!-- <div class="debugger">
+        <div class="debugger">
             <div class="debug-info">
                 <code>Score: {{ score }}</code>
                 <code>Strike: {{ strike }}</code>
@@ -470,7 +462,7 @@ const coordsInPath = (coords) => {
                     <option value="fifteen">15 colors</option>
                 </select>
             </div>
-        </div> -->
+        </div>
 
         <!-- cells -->
         <div v-for="i, in (vGridSize * hGridSize)" class="cell"></div>
@@ -489,10 +481,9 @@ const coordsInPath = (coords) => {
                 height: `${cellSize}vmin`,
                 // opacity: obj.hidden ? 0 : 1,
                 transition: obj.dynamic ? `top ${0.5}s ease-in` : 'none',
-                border: index >= (hGridSize * vGridSize) -1 ? `5px solid yellow` : `none`
             }"
             >
-            <span class="index">{{ [ obj.data.coords.row, obj.data.coords.col ]}} - {{ obj.target }}</span>
+            <span class="index">{{ [ obj.data.coords.row, obj.data.coords.col ]}} | {{ obj.target }}</span>
         </div>
 
         <!-- connecteuren -->
