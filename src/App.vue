@@ -11,7 +11,7 @@ let gameboard = ref([])
 let connectors = ref([])
 let vGridSize = ref(5)
 let hGridSize = ref(5)
-let cellSize = ref(6)
+let cellSize = ref(10)
 let cellGap = ref(2)
 let path = ref([])
 let score = ref(0)
@@ -264,14 +264,14 @@ function processStrike(){
 
     gameboard.value.forEach(entry => entry.dynamic = false)
 
-    if(strikedIds.value.length > 0 && path.value.length){
+    if(path.value.length){
 
         // find out which balls are on top of striked ball
         defineStackAndDropNewBalls()
 
-        /* score.value += strike.value + 1
-        strikedIds.value = []
-        strike.value = 0 */
+        // score.value += strike.value + 1
+        // strikedIds.value = []
+        // strike.value = 0
     }
 }
 
@@ -281,19 +281,75 @@ function defineStackAndDropNewBalls(){
         return a.data.coords.row < b.data.coords.row ? 1 : -1 
     })
 
+    let cols = []
+
     sortedPath.forEach(p => {
-        console.log()
+
+        // find gameboard entry
+        let entry = gameboard.value.find(entry => entry.data.coords.row === p.data.coords.row && entry.data.coords.col === p.data.coords.col)
+        
+        if(!entry) return
+
+        entry.style.backgroundColor = "black"
+
+        cols.push(p.data.coords.col)
+
     })
 
+    const targets = []
 
-    let gameboardCoords = gameboard.value.map(entry => JSON.stringify(entry.data.coords))
-    let emptyCoords = allCoords.value.filter(coord => !gameboardCoords.includes(coord)).map(coords => JSON.parse(coords))
+    for(let col = 0; col < hGridSize.value; col++){
+
+        for(let row = vGridSize.value; row >= 0; row--){
+
+            let current = gameboard.value.find(g => g.data.coords.row === row && g.data.coords.col === col)
+
+            let inPath = sortedPath.find(p => p === current)
+            
+            if(!inPath && !current?.target) continue;
+
+            for(let up = row - 1; up >= -vGridSize.value; up--){
+
+                let current = gameboard.value.find(g => g.data.coords.row === up && g.data.coords.col === col)
+
+                if (up < 0) {
+                    console.log('create ball at and assign target for', up, row)
+                    break;
+                } 
+
+                let inPath = sortedPath.find(p => p === current)
+
+                if(inPath || current.target !== undefined ) continue;
+
+                console.log('found', up)
+
+                current.style.backgroundColor = "yellow"
+
+                current.target = row
+
+                break;
+
+            }
+        }
+    }
+
+    console.log(targets)
+
+
+    // END
+
+}
+
+function movePosition(fromCoords, toCoords){
+
+    if(!(Array.isArray(fromCoords) || Array.isArray(toCoords))) return
+
+
 
 }
 
 
 function checkAdjacing(newObj, prevObj) {
-    // obv row en col distance check
 
     let rowDiff = newObj.data.coords.row - prevObj.data.coords.row
     let colDiff = newObj.data.coords.col - prevObj.data.coords.col
@@ -436,7 +492,7 @@ const coordsInPath = (coords) => {
                 border: index >= (hGridSize * vGridSize) -1 ? `5px solid yellow` : `none`
             }"
             >
-            <span class="index">i: {{ index }}</span>
+            <span class="index">{{ [ obj.data.coords.row, obj.data.coords.col ]}} - {{ obj.target }}</span>
         </div>
 
         <!-- connecteuren -->
