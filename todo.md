@@ -1,18 +1,25 @@
-## TODO list
-[] nieuwe droplogic
-[X] oplossing/workaround langzame trigger balletjes
-[?] lag bij slepen buiten board
-[] implementatie terug striken => strike id aanpassen
 
-[] generen nieuwe balletjes lege cellen bovenkant
-[] blokkades cellen # feature
-[] styling connectors verbeteren
+## DOTS GAME (Balletje Balletje)
+    core
+        [x] droplogic
+        [x] oplossing/workaround langzame trigger balletjes
+        [x] lag bij slepen buiten board
+        [O] implementatie terug striken => strike id aanpassen
+        [x] touch event listeners for mobile implementation
+    gameboard
+        logic
+            [x] generen nieuwe balletjes lege cellen bovenkant
+            [x] blokkades cellen # feature
+            [x] random generator blockades
+            [x] Minimaal meer dan 2 balletjes connecten
+    styling
+        [x] blokkades cellen styling
+        
+        connectors
+            [P] connectors styling verbeteren
 
-## generen nieuwe cellen.
 
-1. ballen worden gegenereerd op gespiegelde posities t.o.v. van uiteindelijke positie
-2. zoek maximale row coordinate in - posities verplaats naar maximale row + posities. => DMV afwaardse loop
-3. grootste in minus spectrum gaat naar grootste in positive spectrum
 
+ 
 
 

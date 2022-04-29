@@ -1,5 +1,11 @@
 html {
     user-select: none;
+    background-color: #333;
+}
+
+:root {
+    --brown: #421c13;
+    --brown-dark: #240b07;
 }
 
 *, *::before, *::after {
@@ -7,16 +13,140 @@ html {
     font-family: Arial;
 }
 
+.container {
+    display: flex;
+    justify-content: center;
+    max-height: 100%;
+}
+
+.results {
+    background-color: var(--brown);
+    display: flex;
+    flex-direction: column;
+    color: orange;
+    padding: 20px;
+    flex: 1;
+}
+
+.results > .content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    border: 1px solid orange;
+    padding: 25px;
+}
+
+.count-down-wrapper, .strikes-made-wrapper, .avg-score-wrapper{
+    display: flex;
+    flex-direction: column;
+    flex: 1; 
+}
+
+.count-down-label, .strikes-label, .avg-label{
+    font-size: 3vmin;
+}
+
+.count-down-value, .strikes-value, .avg-value{
+    font-size: 5vmin;
+}
+
 #app{
-    position: fixed;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    background-color: #333;
-    font-size: 7.5vmin;
     margin: 0;
+    padding: 20px;
+}
+
+.block{
+    position: absolute;
+    background: linear-gradient(to bottom right, var(--brown), var(--brown-dark));
+    z-index: 1
+}
+
+.score-panel{
+    background-color: var(--brown);
+    display: flex;
+    justify-content: center;
+    color: orange;
+    padding: 20px;
+}
+
+.score-panel > .content {
+    border: 2px solid orange;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+}
+
+.score-panel > .content > .section {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: column;
+    padding: 25px;
+    min-height: 160px;
+}
+
+.score-label, .strike-label{
+    font-size: 3vmin;
+}
+
+.score, .strike{
+    font-size: 5vmin;
+}
+
+
+.score-panel > .content > .section > .score.animate {
+    animation-name: flashScore;
+    height: min-content;
+    animation-duration: 0.5s;
+    transform-origin: center center;
+    /* animation-timing-function: ease-in-out */
+}
+
+
+@media only screen and (max-width: 821px) {
+    .container{
+        flex-direction: column;
+    }
+
+    .results > .content {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .count-down-wrapper, .strikes-made-wrapper, .avg-score-wrapper{
+        height: 80px;
+        justify-content: space-between;
+    }
+
+
+    .score-panel > .content {
+        flex-direction: row;
+        width: 100%;
+    }
+
+    .score-panel > .content > .section {
+        min-height: 110px;
+    }
+
+}
+
+@keyframes flashScore {
+    from { 
+        transform: scale(1);
+        font-weight: bold;
+    }
+    to { 
+        transform: scale(2.5);
+        font-weight: bold;
+    }
 }
 
 #gameboard{
@@ -37,10 +167,7 @@ html {
 .connector{
     position: absolute;
     pointer-events: none;
-}
-
-.connector-wrapper{
-    position: absolute;
+    z-index: 2;
 }
 
 .ball{
@@ -51,13 +178,18 @@ html {
     align-items: center;
     border-radius: 50%;
     font-weight: bold;
-    /* animation: show 200ms ease-in-out;    */
+    z-index: 1;
     opacity: 1;
 }
 
-.ball > span.index{
-    color: white;
-    font-size: 12px;
+.ball>span.inSelect{
+    display: block;
+    position: absolute;
+    width: 3.5vmin;
+    height: 3.5vmin;
+    border-radius: 50%;
+    background-color: black;
+    pointer-events: none;
 }
 
 @keyframes show{
@@ -65,27 +197,4 @@ html {
         opacity: .5;
         transform: scale(0);
     }
-}
-
-.debugger{
-    position: fixed;
-    display: flex;
-    padding: 10px;
-    top: 0;
-    left: 0;
-    border: 1px solid red;
-    width: 100%;
-    background-color: white;
-    font-size: 14px;
-}
-
-.debugger > div{
-    display: flex;
-    flex-direction: column;
-    width: 50%;
-    border: 1px solid red;
-}
-
-.hidden {
-    opacity: 0;
 }
