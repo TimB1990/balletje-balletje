@@ -210,11 +210,21 @@ function handleCellDrag(obj){
     const adjacing = checkAdjacing(obj, previousobj, path.value)
 
     if (colormatch && adjacing) {
-        generateConnector(previousobj.data.coords, obj.data.coords)
         path.value.push(obj)
+        generateConnector(previousobj.data.coords, obj.data.coords)
         strike.value += 1
         return
     }
+}
+
+function removeConnectors(){
+    connectors.value.forEach((connector) => {
+        const { id } = connector
+        let connectorElement = document.getElementById(id)
+        connectorElement.parentNode.removeChild(connectorElement)
+    })
+
+    connectors.value = []
 }
 
 function processStrike(){
@@ -223,6 +233,7 @@ function processStrike(){
 
     if(!(path.value.length >= settings.MIN_STRIKE_LENGTH)){
         strike.value = 0;
+        removeConnectors();
         path.value = []
         return
     }
@@ -234,13 +245,8 @@ function processStrike(){
     document.querySelector(".score").classList.add('animate')
     strike.value = 0
 
-    connectors.value.forEach((connector) => {
-        const { id } = connector
-        let connectorElement = document.getElementById(id)
-        connectorElement.parentNode.removeChild(connectorElement)
-    })
-    
-    connectors.value = []
+    // remove connectors from DOM
+    removeConnectors();
 
     setTimeout(() => {
         document.querySelector(".score").classList.remove('animate')
