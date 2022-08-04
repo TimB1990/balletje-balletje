@@ -23,7 +23,6 @@ let blocks = getRandomBlocks(settings.BLOCK_AMOUNT, settings.H_GRID_SIZE, settin
 let colorVariety = settings.DEBUG ? ref("one") : ref("three")
 let strikesMade = ref(0)
 let avgScore = ref(0)
-let time = ref(10)
 let connectors = ref([])
 
 onMounted(() => {
