@@ -29,7 +29,7 @@ onMounted(() => {
     reset()
 })
 
-function reset(){
+function reset() {
 
     gameboard.value = []
     score.value = 0
@@ -39,18 +39,18 @@ function reset(){
     gameboard.value = populateGameboard()
 }
 
-function generateBall(x, y){
+function generateBall(x, y) {
 
     let position = {
-        top: y * ( cellSize.value + cellGap.value ) + cellGap.value,
-        left: x * ( cellSize.value + cellGap.value ) + cellGap.value
+        top: y * (cellSize.value + cellGap.value) + cellGap.value,
+        left: x * (cellSize.value + cellGap.value) + cellGap.value
     }
 
     return {
         id: Math.random().toString(36).slice(2, 10),
         data: {
-            coords: {row: y, col: x},
-            adjacingDirection: [0,0],
+            coords: { row: y, col: x },
+            adjacingDirection: [0, 0],
         },
         dynamic: false,
         position,
@@ -60,16 +60,16 @@ function generateBall(x, y){
     }
 }
 
-function populateGameboard(){
+function populateGameboard() {
 
     let board = []
 
-    for(let y = 0; y < vGridSize.value; y++){
-        for(let x = 0; x < hGridSize.value; x++){
+    for (let y = 0; y < vGridSize.value; y++) {
+        for (let x = 0; x < hGridSize.value; x++) {
 
-            allCoords.value.push([y,x])
+            allCoords.value.push([y, x])
 
-            if(blocks.find(b => b[0] === y && b[1] === x)) continue;
+            if (blocks.find(b => b[0] === y && b[1] === x)) continue;
 
             board.push(generateBall(x, y));
         }
@@ -78,8 +78,8 @@ function populateGameboard(){
     return board
 }
 
-function generateConnector(startCoords, endCoords){
- 
+function generateConnector(startCoords, endCoords) {
+
     const direction = {
         y: endCoords.row - startCoords.row,
         x: endCoords.col - startCoords.col
@@ -91,15 +91,15 @@ function generateConnector(startCoords, endCoords){
 
     connectorElement.setAttribute('id', `connector-${connectors.value.length}`)
 
-    function css(element, style){
-        for(const property in style){
+    function css(element, style) {
+        for (const property in style) {
             element.style[property] = style[property]
         }
     }
 
     css(connectorElement, {
         'position': 'absolute',
-        'background-color' : 'black',
+        'background-color': 'black',
         'width': '10px',
     })
 
@@ -114,67 +114,67 @@ function generateConnector(startCoords, endCoords){
 
     let { x, y } = direction;
 
-    if(y === 1 && x === 0){
+    if (y === 1 && x === 0) {
         rotation = 0
         offsetY = (cellSize.value / 2 - (cellGap.value / 2)) * -1
         offsetX = (cellSize.value / 2) - (cellGap.value / 2)
         height = cellSize.value + cellGap.value + 'vmin'
     }
-    else if(y === 1 && x === 1){
+    else if (y === 1 && x === 1) {
         rotation = 135
         offsetY = (cellSize.value / 2) * -1 + (cellGap.value)
         offsetX = (cellSize.value / 2) + (2.5 * cellGap.value) + cellGap.value / 2
         height = Math.sqrt(Math.pow(cellSizeGap, 2) + Math.pow(cellSizeGap, 2)) + 'vmin'
     }
-    else if(y === 0 && x === 1){
+    else if (y === 0 && x === 1) {
         rotation = 90
         offsetY = cellGap.value / 2
         offsetX = cellSize.value
         height = cellSize.value + cellGap.value + 'vmin'
     }
-    else if(y === -1 && x === 1){
+    else if (y === -1 && x === 1) {
         rotation = 45
         offsetY = (cellSize.value / 2) + cellGap.value * 2
         offsetX = (cellSize.value / 2) + (2.5 * cellGap.value)
         height = Math.sqrt(Math.pow(cellSizeGap, 2) + Math.pow(cellSizeGap, 2)) + 'vmin'
 
     }
-    else if(y === -1 && x === 0){
+    else if (y === -1 && x === 0) {
         rotation = 180
         offsetY = cellSize.value / 2 + cellGap.value,
-        offsetX = (cellSize.value / 2) - (cellGap.value / 2)
+            offsetX = (cellSize.value / 2) - (cellGap.value / 2)
         height = cellSize.value + cellGap.value + 'vmin'
     }
-    else if(y === -1 && x === -1){
+    else if (y === -1 && x === -1) {
         rotation = -45
         offsetY = cellSize.value / 2 + cellGap.value * 2;
         height = Math.sqrt(Math.pow(cellSizeGap, 2) + Math.pow(cellSizeGap, 2)) + 'vmin'
     }
-    else if(y === 0 && x === -1){
+    else if (y === 0 && x === -1) {
         rotation = -90
         offsetY = (cellGap.value / 2)
         height = cellSize.value + cellGap.value + 'vmin'
     }
-    else if(y === 1 && x === -1){
+    else if (y === 1 && x === -1) {
         rotation = -135
-        offsetY = (cellSize.value / 2) * -1 + (cellGap.value * 1.5) 
+        offsetY = (cellSize.value / 2) * -1 + (cellGap.value * 1.5)
         offsetX = (cellGap.value) * -1;
         height = Math.sqrt(Math.pow(cellSizeGap, 2) + Math.pow(cellSizeGap, 2)) + 'vmin'
     }
 
     css(connectorElement, {
-        'left' : startCoords.col * ( cellSize.value + cellGap.value ) + cellGap.value + offsetX + 'vmin',
-        'top' : startCoords.row * ( cellSize.value + cellGap.value ) + cellGap.value  - offsetY + 'vmin',
-        'transform' : `rotate(${rotation}deg)`,
-        'height' : height,
-        'z-index' : '5'
+        'left': startCoords.col * (cellSize.value + cellGap.value) + cellGap.value + offsetX + 'vmin',
+        'top': startCoords.row * (cellSize.value + cellGap.value) + cellGap.value - offsetY + 'vmin',
+        'transform': `rotate(${rotation}deg)`,
+        'height': height,
+        'z-index': '5'
     })
 
     connectors.value.push(connectorElement);
 
 }
 
-function handleCellDrag(obj){
+function handleCellDrag(obj) {
 
     if (!path.value.length) {
         strike.value = 0
@@ -186,17 +186,17 @@ function handleCellDrag(obj){
 
     if (path.value.includes(obj)) {
 
-        if(previousobj.id !== obj.id){
+        if (previousobj.id !== obj.id) {
 
             let touchedIndex = path.value.indexOf(previousobj)
-            for(let i = touchedIndex; i < path.value.length; i++){
+            for (let i = touchedIndex; i < path.value.length; i++) {
                 path.value.splice(i, 1);
             }
 
             strike.value -= 1
 
             let lastConnectorId = connectors.value.pop().id
-            
+
             let lastConnector = document.getElementById(lastConnectorId)
             lastConnector.parentNode.removeChild(lastConnector)
         }
@@ -216,7 +216,7 @@ function handleCellDrag(obj){
     }
 }
 
-function removeConnectors(){
+function removeConnectors() {
     connectors.value.forEach((connector) => {
         const { id } = connector
         let connectorElement = document.getElementById(id)
@@ -226,11 +226,11 @@ function removeConnectors(){
     connectors.value = []
 }
 
-function processStrike(){
+function processStrike() {
 
     gameboard.value.forEach(entry => entry.dynamic = false)
 
-    if(!(path.value.length >= settings.MIN_STRIKE_LENGTH)){
+    if (!(path.value.length >= settings.MIN_STRIKE_LENGTH)) {
         strike.value = 0;
         removeConnectors();
         path.value = []
@@ -252,15 +252,15 @@ function processStrike(){
         strikesMade.value += 1
         let average = score.value / strikesMade.value
         avgScore.value = parseFloat(average.toFixed(1))
-        
+
     }, 500)
 
 }
 
-function defineStackAndDropNewBalls(){
+function defineStackAndDropNewBalls() {
 
     const sortedPath = path.value.sort((a, b) => {
-        return a.data.coords.row < b.data.coords.row ? 1 : -1 
+        return a.data.coords.row < b.data.coords.row ? 1 : -1
     })
 
     let cols = []
@@ -268,30 +268,30 @@ function defineStackAndDropNewBalls(){
     sortedPath.forEach(p => {
 
         let entry = gameboard.value.find(entry => entry.data.coords.row === p.data.coords.row && entry.data.coords.col === p.data.coords.col)
-        
-        if(!entry) return
+
+        if (!entry) return
 
         cols.push(p.data.coords.col)
 
     })
 
     // loop over each column
-    for(let col = 0; col < hGridSize.value; col++){
+    for (let col = 0; col < hGridSize.value; col++) {
 
         // loop over each row
-        for(let row = vGridSize.value; row >= 0; row--){
+        for (let row = vGridSize.value; row >= 0; row--) {
 
             //get current from gameboard having entry at row
             let current = gameboard.value.find(g => g.data.coords.row === row && g.data.coords.col === col)
 
             // check if current is inPath - striked away
             let inPath = sortedPath.find(p => p === current)
-            
+
             // if not in path or current is either defined and has target go to next iteration - skip row
-            if(!inPath && !current?.target) continue;
+            if (!inPath && !current?.target) continue;
 
             // when current has no target defined or is in path, loop up to minus vGridsize (outside board)
-            for(let up = row - 1; up >= -vGridSize.value; up--){
+            for (let up = row - 1; up >= -vGridSize.value; up--) {
 
                 // find present ball in up loop
                 let present = gameboard.value.find(g => g.data.coords.row === up && g.data.coords.col === col)
@@ -303,21 +303,21 @@ function defineStackAndDropNewBalls(){
                     newBall.dynamic = true
                     newBall.target = row
                     break;
-                } 
+                }
 
                 // check if present is in path (is striked)
                 let presentInPath = sortedPath.find(p => p === present)
 
                 // if present in path - is striked, or present has target not undefined - skip iteration
-                if(presentInPath || present?.target !== undefined){
+                if (presentInPath || present?.target !== undefined) {
                     continue;
                 }
 
                 // if present evaluates undefined - skip iteration as wel
-                if(!present) continue;
-                
+                if (!present) continue;
+
                 // if present set target to row
-                if(present) present.target = row
+                if (present) present.target = row
 
                 // exit loop
                 break;
@@ -328,7 +328,7 @@ function defineStackAndDropNewBalls(){
     gameboard.value = gameboard.value.filter(entry => !sortedPath.map(s => s.id).includes(entry.id))
 
     gameboard.value.forEach(entry => {
-        if(entry.target === undefined) return
+        if (entry.target === undefined) return
         setTimeout(() => {
             entry.dynamic = true
             entry.data.coords.row = entry.target
@@ -338,11 +338,11 @@ function defineStackAndDropNewBalls(){
 }
 
 // GAME BOARD EVENT LISTENERS
-function onMouseDown(e){
+function onMouseDown(e) {
 
     e.preventDefault()
 
-    if(!e.target.closest("#gameboard")) return
+    if (!e.target.closest("#gameboard")) return
 
     let board = document.querySelector("#gameboard")
 
@@ -355,7 +355,7 @@ function onMouseDown(e){
     window.addEventListener('touchcancel', onMouseUp)
 }
 
-function onMouseUp(e){
+function onMouseUp(e) {
 
     e.preventDefault()
 
@@ -373,7 +373,7 @@ function onMouseUp(e){
 
 }
 
-function onMouseMove(e){
+function onMouseMove(e) {
 
     e.preventDefault();
 
@@ -383,11 +383,11 @@ function onMouseMove(e){
     board.removeEventListener("mousedown", onMouseDown)
     board.removeEventListener("touchstart", onMouseDown)
 
-    if(!target) return
+    if (!target) return
 
     let element = target.closest('.ball')
 
-    if(!element) return
+    if (!element) return
 
     let dataId = element.getAttribute("data-id")
 
@@ -399,7 +399,7 @@ function onMouseMove(e){
 }
 
 // COORDS IN PATH
-function coordsInPath(coords){
+function coordsInPath(coords) {
 
     let data = path.value.map(entry => {
         return {
@@ -432,8 +432,10 @@ const gameboardLayout = computed(() => {
 
         <div class="score-panel">
             <div class="content">
-                <div class="section"><span class="score-label">SCORE:</span> <span class="score">{{ score }}</span></div>
-                <div class="section"><span class="strike-label">STRIKE: </span><span class="strike">{{ strike }}</span></div>
+                <div class="section"><span class="score-label">SCORE:</span> <span class="score">{{ score }}</span>
+                </div>
+                <div class="section"><span class="strike-label">STRIKE: </span><span class="strike">{{ strike }}</span>
+                </div>
             </div>
         </div>
 
@@ -444,26 +446,22 @@ const gameboardLayout = computed(() => {
 
             <!-- blocks -->
             <div class="block" v-for="coords in blocks" :key="coords" :style="{
-                top: ((coords[0] * ( cellSize + cellGap )) + cellGap)+'vmin',
-                left: ((coords[1] * ( cellSize + cellGap )) + cellGap)+'vmin',
+                top: ((coords[0] * (cellSize + cellGap)) + cellGap) + 'vmin',
+                left: ((coords[1] * (cellSize + cellGap)) + cellGap) + 'vmin',
                 width: `${cellSize}vmin`,
                 height: `${cellSize}vmin`,
             }"></div>
 
             <!-- balls -->
-            <div v-for="(obj) in gameboard" 
-                :data-id="obj.id"
-                :key="obj.id"
-                :class="{ball: true, striked: path.find(p => p.id === obj.id)}"
-                :style="{
-                    top: ((obj.data.coords.row * ( cellSize + cellGap )) + cellGap)+'vmin',
-                    left: ((obj.data.coords.col * ( cellSize + cellGap )) + cellGap)+'vmin',
+            <div v-for="(obj) in gameboard" :data-id="obj.id" :key="obj.id"
+                :class="{ ball: true, striked: path.find(p => p.id === obj.id) }" :style="{
+                    top: ((obj.data.coords.row * (cellSize + cellGap)) + cellGap) + 'vmin',
+                    left: ((obj.data.coords.col * (cellSize + cellGap)) + cellGap) + 'vmin',
                     background: `radial-gradient(circle at 15px 15px, ${obj.style.backgroundColor}, #000)`,
                     width: `${cellSize}vmin`,
                     height: `${cellSize}vmin`,
                     transition: obj.dynamic ? `top ${0.5}s ease-in` : 'none',
-                }"
-                >
+                }">
                 <span v-show="path.find(p => p.id === obj.id)" class="inSelect"></span>
             </div>
         </div>
